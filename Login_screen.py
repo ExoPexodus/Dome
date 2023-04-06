@@ -54,19 +54,14 @@ def authentication():
     cur.execute(selectscript)
     if len(name) == 0:
         tkinter.messagebox.showinfo("Error", "please fill the username field")
+    elif len(password) == 0:
+        tkinter.messagebox.showinfo("Error","please fill the password field")
+    elif cur.fetchall():
+        print("Account Authincated")
+        welcome()
     else:
-        if len(password) == 0:
-            tkinter.messagebox.showinfo("Error","please fill the password field")
-        else:
-            if cur.fetchall():
-                print("Account Authincated")
-                welcome()
-                uid = cur.execute(("select id from users where name = %s"), (name))
-                print(uid)
-                print(name)
-            else:
-                print("Credentials don't exist")
-                tkinter.messagebox.showinfo("Error","Error: The credentials do not match with the database")
+        print("Credentials don't exist")
+        tkinter.messagebox.showinfo("Error","Error: The credentials do not match with the database")
 
 
 def account_creation():
@@ -84,32 +79,29 @@ def account_creation():
             cur.execute(check_user_script)
             if cur.fetchall():
                 tkinter.messagebox.showerror("Error", "Error: username already exists")
-            else:
-                if len(email) == 0:
+            elif len(email) == 0:
                     tkinter.messagebox.showerror("Error", "Error: Email is empty")
-                if '@' not in email or not email.index('@') > 0 and email.index('@') < len(email) - 5:
+            elif '@' not in email or not email.index('@') > 0 and email.index('@') < len(email) - 5:
                     tkinter.messagebox.showerror("Error","Error: Email written incorrectly, please make sure you're writing the email correctly")
-                elif not email.endswith('.com'):
+            elif not email.endswith('.com'):
                     tkinter.messagebox.showerror("Error","Error: Email written incorrectly, please make sure you're writing the email correctly")
-                else:
-                    cur.execute(check_email_script)
-                    if cur.fetchall():
-                        tkinter.messagebox.showerror("Error", "Error: email already exists")
-                    else:
-                        if len(password) <= 7:
-                            tkinter.messagebox.showerror("Error", "Error: Please make the password at least 8 characters for security reasons")
-                        else:
-                            if password == confirm_password:
+            else:
+                cur.execute(check_email_script)
+                if cur.fetchall():
+                    tkinter.messagebox.showerror("Error", "Error: email already exists")
+                elif len(password) <= 7:
+                    tkinter.messagebox.showerror("Error", "Error: Please make the password at least 8 characters for security reasons")
+                elif password == confirm_password:
 
-                                insertscript = "insert into users(name,email,pass) values('%s','%s','%s')"%(username,email,password)
-                                cur.execute(insertscript)
-                                conn.commit()
-                                print("account created")
-                                tkinter.messagebox.showinfo("Message", "Account Successfully Created")
-                                back()
-                            else:
-                                print("The passwords do not match")
-                                tkinter.messagebox.showerror("Error", "Passwords do not match")
+                    insertscript = "insert into users(name,email,pass) values('%s','%s','%s')"%(username,email,password)
+                    cur.execute(insertscript)
+                    conn.commit()
+                    print("account created")
+                    tkinter.messagebox.showinfo("Message", "Account Successfully Created")
+                    back()
+                else:
+                    print("The passwords do not match")
+                    tkinter.messagebox.showerror("Error", "Passwords do not match")
 
 def on_enter_press(event):
     # simulate a button click
