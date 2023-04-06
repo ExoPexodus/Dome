@@ -34,15 +34,17 @@ uid = int(row[0])
 #Defining a default table number for table_switch and table_creation functions
 table_number = 2
 #=======================Defining Functions==============
-# Logout function for logout_button
-def logout():
-    custom_functions.disconnect()
-    if len(Login_screen.name) > 0:
-        dome.destroy()
-        Login_screen.app.mainloop()
 
-# Gui popup for data insertion in the expenses table
+def logout():
+    # Logout function for logout_button
+    print("button pressed")
+    custom_functions.disconnect()
+    if len(name) > 0:
+        dome.destroy()
+
+
 def insert_exp():
+    # Gui popup for data insertion in the expenses table
     def enter_data_in_expenses():
         details = entry_details.get()
         amount = entry_amount.get()
@@ -88,9 +90,9 @@ def insert_exp():
 
     insert_expenses.mainloop()
 
-# Gui popup for data insertion in the income table
-def insert_inc():
 
+def insert_inc():
+    # Gui popup for data insertion in the income table
     def enter_data_in_expenses():
         details = entry_details.get()
         amount = entry_amount.get()
@@ -138,6 +140,8 @@ def insert_inc():
     insert_expenses.mainloop()
 
 def update_table_category_expense(start_date,end_date):
+    # Function to update the table for categories in the expense frame
+    #check if the table exists in the subdown frame and destory it if it exists
     children = dome.frame_Expenses.right.down.subdown.winfo_children()
     for child in children:
         try:
@@ -145,18 +149,22 @@ def update_table_category_expense(start_date,end_date):
                 treeview_expense.destroy()
         except NameError:
             pass
-
+    #create a new table by calling the function below
     create_table_category_expense(start_date,end_date)
 
 def create_table_category_expense(start_date,end_date):
+    # Function to create a table for categories in the expense frame
+    # create a global variable so that the table can be accessed by the functions outside of this function
     global treeview_expense
+    #set up a custom style to use in the table for a better font
     custom_font = ('Arial', 18)
     style = ttk.Style()
     style.configure('Custom.Treeview', rowheight=30)
     cur.execute("SELECT distinct(category), sum(amount) FROM expenses where id = %s and dayofexpense between %s and %s group by distinct(category) order by sum(amount) desc", (uid,start_date,end_date))
     rows = cur.fetchall()
 
-    columns = ('category', 'amount')  # replace with the actual column names
+    #column names that are to be shown in the GUI
+    columns = ('category', 'amount')
     treeview_expense = ttk.Treeview(dome.frame_Expenses.right.down.subdown, columns=columns, show='headings', height=6, style='Custom.Treeview')
     treeview_expense.grid(row=0, column=0, sticky='nsew')
 
@@ -172,16 +180,18 @@ def create_table_category_expense(start_date,end_date):
 
     # Apply the custom font to all items in the Treeview
     treeview_expense.tag_configure('custom_font', font=custom_font)
-
     for row in treeview_expense.get_children():
         treeview_expense.item(row, tags=('custom_font',))
 
+
 def create_table_income():
+    # function to create a table for income in the GUI
     # Fetch data from the specified table
     cur.execute(f"SELECT source, details, amount, dayofincome FROM income where id = %s ORDER BY dayofincome DESC LIMIT 30",(uid,))
     rows = cur.fetchall()
 
-    columns = ('category', 'details', 'amount', 'date')  # replace with the actual column names
+    #column names that are to be shown in the GUI
+    columns = ('category', 'details', 'amount', 'date')
     treeview = ttk.Treeview(dome.frame_insert.up, columns=columns, show='headings', height=20)
     treeview.grid(row=0, column=0, sticky='nsew')
 
@@ -198,12 +208,14 @@ def create_table_income():
         treeview.insert('', tk.END, values=row)
 
 def create_table_expense():
+    # function to create a table for expenses in the GUI
     cur.execute(
         "SELECT category,details,amount,dayofexpense FROM expenses where id = %s order by dayofexpense desc limit 30",
         (uid,))
     rows = cur.fetchall()
 
-    columns = ('category', 'details', 'amount', 'date')  # replace with the actual column names
+    #column names that are to be shown in the GUI
+    columns = ('category', 'details', 'amount', 'date')
     treeview = ttk.Treeview(dome.frame_insert.up, columns=columns, show='headings', height=20)
     treeview.grid(row=0, column=0, sticky='nsew')
 
@@ -218,8 +230,11 @@ def create_table_expense():
     # Insert the retrieved data as rows in the Treeview
     for row in rows:
         treeview.insert('', tk.END, values=row)
-
 def switch_table_expense():
+    # function to switch to expenses table
+    #look for all the tables in the specified frame and
+    #delete the tables if found with the same variable names as specified below
+
     children = dome.frame_insert.up.winfo_children()
     for child in children:
         try:
@@ -238,10 +253,13 @@ def switch_table_expense():
         except NameError:
             pass
 
-
+    #create a new expense table as a replacement to the old one
     create_table_expense()
 
 def switch_table_income():
+    # function to switch to income table
+    #look for all the tables in the specified frame and
+    #delete the tables if found with the same variable names as specified below
     children = dome.frame_insert.up.winfo_children()
     for child in children:
         try:
@@ -260,11 +278,13 @@ def switch_table_income():
         except NameError:
             pass
 
-
+    #create a new expense table as a replacement to the old one
     create_table_income()
 
 
 def create_double_table():
+    #function to create two different tables for both expenses and income
+    #destory any pre-made tables after looking for them with wininfo_childeren()
     children = dome.frame_insert.up.winfo_children()
     for child in children:
         if child == treeview:
