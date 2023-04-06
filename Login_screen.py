@@ -104,7 +104,7 @@ def account_creation():
                     tkinter.messagebox.showerror("Error", "Passwords do not match")
 
 def on_enter_press(event):
-    # simulate a button click
+    # simulate a button click using enter key
     authentication()
 
 #=============================Login Frame==================================
