@@ -1,4 +1,3 @@
-import tkinter  # for the basic GUI features
 import tkinter.messagebox   # For the default errors and message popups
 import customtkinter     # Custom Tkinter library for a cool Tkinter look
 import custom_functions     # Custom function python script for additional database connection related functions
@@ -53,15 +52,15 @@ def authentication():
     selectscript = "Select * from users where name = '%s' and pass = '%s'"%(name,password)
     cur.execute(selectscript)
     if len(name) == 0:
-        tkinter.messagebox.showinfo("Error", "please fill the username field")
+        tkinter.messagebox.showerror("Error", "please fill the username field")
     elif len(password) == 0:
-        tkinter.messagebox.showinfo("Error","please fill the password field")
+        tkinter.messagebox.showerror("Error","please fill the password field")
     elif cur.fetchall():
         print("Account Authincated")
         welcome()
     else:
         print("Credentials don't exist")
-        tkinter.messagebox.showinfo("Error","Error: The credentials do not match with the database")
+        tkinter.messagebox.showerror("Error","Error: The credentials do not match with the database")
 
 
 def account_creation():
