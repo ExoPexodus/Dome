@@ -1,15 +1,16 @@
 import psycopg2
 import psycopg2.extras
 import configparser
+import os
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
 
-hostname = config['Postgresql']['host']
-database = config['Postgresql']['database']
-uname = config['Postgresql']['user']
-port_id = config['Postgresql']['port']
-pwd = config['Postgresql']['password']
+hostname = config.get('postgresql','host')
+database = config.get('postgresql','database')
+uname = config.get('postgresql','user')
+port_id = config.get('postgresql','port')
+pwd = config.get('postgresql','password')
 conn = None
 cur = None
 
