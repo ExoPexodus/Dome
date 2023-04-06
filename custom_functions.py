@@ -5,11 +5,11 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-hostname = config['postgresql']['host']
-database = config['postgresql']['database']
-uname = config['postgresql']['user']
-port_id = config['postgresql']['port']
-pwd = config['postgresql']['izFsjS7GK4rQ']
+hostname = config['Postgresql']['host']
+database = config['Postgresql']['database']
+uname = config['Postgresql']['user']
+port_id = config['Postgresql']['port']
+pwd = config['Postgresql']['password']
 conn = None
 cur = None
 
