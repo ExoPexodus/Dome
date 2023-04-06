@@ -1,11 +1,15 @@
 import psycopg2
 import psycopg2.extras
+import configparser
 
-hostname = "ep-curly-poetry-514695.ap-southeast-1.aws.neon.tech"
-database = "neondb"
-uname = "rushilrana"
-port_id = "5432"
-pwd = "izFsjS7GK4rQ"
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+hostname = config['postgresql']['host']
+database = config['postgresql']['database']
+uname = config['postgresql']['user']
+port_id = config['postgresql']['port']
+pwd = config['postgresql']['izFsjS7GK4rQ']
 conn = None
 cur = None
 
