@@ -9,7 +9,7 @@ from matplotlib.figure import Figure     #Matplotlib for Graphs and pie chart
 import matplotlib.pyplot as plt  #Matplotlib for Graphs and pie chart
 from datetime import datetime, timedelta  #datetime library for time and date calculations and insertion
 import Login_screen     # python script for user authentication
-
+import psycopg2
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -138,51 +138,6 @@ def insert_inc():
 
 
     insert_expenses.mainloop()
-
-def update_table_category_expense(start_date,end_date):
-    # Function to update the table for categories in the expense frame
-    #check if the table exists in the subdown frame and destory it if it exists
-    children = dome.frame_Expenses.right.down.subdown.winfo_children()
-    for child in children:
-        try:
-            if child == treeview_expense:
-                treeview_expense.destroy()
-        except NameError:
-            pass
-    #create a new table by calling the function below
-    create_table_category_expense(start_date,end_date)
-
-def create_table_category_expense(start_date,end_date):
-    # Function to create a table for categories in the expense frame
-    # create a global variable so that the table can be accessed by the functions outside of this function
-    global treeview_expense
-    #set up a custom style to use in the table for a better font
-    custom_font = ('Arial', 18)
-    style = ttk.Style()
-    style.configure('Custom.Treeview', rowheight=30)
-    cur.execute("SELECT distinct(category), sum(amount) FROM expenses where id = %s and dayofexpense between %s and %s group by distinct(category) order by sum(amount) desc", (uid,start_date,end_date))
-    rows = cur.fetchall()
-
-    #column names that are to be shown in the GUI
-    columns = ('category', 'amount')
-    treeview_expense = ttk.Treeview(dome.frame_Expenses.right.down.subdown, columns=columns, show='headings', height=6, style='Custom.Treeview')
-    treeview_expense.grid(row=0, column=0, sticky='nsew')
-
-    # Add columns to the Treeview that correspond to the columns in the retrieved data
-    for col in columns:
-        treeview_expense.heading(col, text=col.title())
-        treeview_expense.column('category', width=350)
-        treeview_expense.column('amount', width=350)
-
-    # Insert the retrieved data as rows in the Treeview
-    for row in rows:
-        treeview_expense.insert('', tk.END, values=row)
-
-    # Apply the custom font to all items in the Treeview
-    treeview_expense.tag_configure('custom_font', font=custom_font)
-    for row in treeview_expense.get_children():
-        treeview_expense.item(row, tags=('custom_font',))
-
 
 def create_table_income():
     # function to create a table for income in the GUI
@@ -383,14 +338,19 @@ def make_changes():
 def show_frame(frame):
     frame.tkraise()
 
-def fetch_expenses_data(start_date, end_date):
-    cur.execute("SELECT distinct(category) as category, SUM(amount) FROM expenses WHERE dayofexpense >= %s AND dayofexpense <= %s AND id = %s GROUP BY category", (start_date, end_date,uid))
-    rows = cur.fetchall()
-    data = {}
-    for row in rows:
-        data[row[0]] = row[1]
-    return data
-
+def fetch_data(start_date, end_date,sql):
+    try:
+        cur.execute(sql, (uid ,start_date, end_date))
+        rows = cur.fetchall()
+        data = {}
+        for row in rows:
+            data[row[0]] = row[1]
+        return data
+    except psycopg2.Error as e:
+        # Log the error or display an error message
+        print("Error fetching data:", e)
+        # Rollback the transaction and start a new one
+        cur.rollback()
 # function to calculate percentage for each category
 def calculate_percentage(data):
     total = sum(data.values())
@@ -399,23 +359,23 @@ def calculate_percentage(data):
         percentages[category] = amount/total * 100
     return percentages
 
-def update_pie_chart(start_date, end_date):
-    data = fetch_expenses_data(start_date, end_date)
+def update_pie_chart(start_date, end_date,sql,pie,can):
+    data = fetch_data(start_date, end_date,sql)
     percentages = calculate_percentage(data)
     labels = percentages.keys()
     sizes = percentages.values()
-    pie_ax.clear() # clear previous chart
-    pie_ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    pie_ax.set_title(f"Expenses by Category ({start_date} to {end_date})")
-    canvas.draw()
+    pie.clear() # clear previous chart
+    pie.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+    pie.set_title(f"Data by Category ({start_date} to {end_date})")
+    can.draw()
 
 
-def update_bar_graph(start_date,end_date):
+def update_bar_graph(start_date,end_date,sql,bar,can):
     # Clear the current bar graph
-    barax.clear()
+    bar.clear()
 
     # Fetch data from the database
-    cur.execute('select distinct category,sum(amount) as amount from expenses where dayofexpense between %s and %s and id = %s group by category order by amount;',(start_date,end_date,uid))
+    cur.execute(sql,(uid,start_date,end_date))
 
     data = cur.fetchall()
     print(data)
@@ -437,13 +397,13 @@ def update_bar_graph(start_date,end_date):
             values[category_name] = value
         else:
             values[category_name] += value
-    barax.bar(values.keys(), values.values())
-    barax.set_xlabel('Category')
-    barax.set_ylabel('Value')
-    barax.set_title('Expenses')
+    bar.bar(values.keys(), values.values())
+    bar.set_xlabel('Category')
+    bar.set_ylabel('Value')
+    bar.set_title('Expenses')
 
 
-    bar_canvas.draw()
+    can.draw()
 
 def update_values(start_date,end_date):
     global total_expense
@@ -461,42 +421,88 @@ def update_values(start_date,end_date):
 
     val3 = val2 - val1
     total_savings.set(val3)
+
     return total_savings,total_expense,total_income
 
-def update_expenses():
-    selection = radio_var.get()
+
+def update_table_category(start_date,end_date,frame_path,sql):
+    # Function to update the table for categories in the expense frame
+    #check if the table exists in the subdown frame and destory it if it exists
+    children = frame_path.winfo_children()
+    for child in children:
+        try:
+            if child == treeview_category:
+                treeview_category.destroy()
+        except NameError:
+            pass
+    #create a new table by calling the function below
+    create_table_category(start_date,end_date,frame_path,sql)
+
+def create_table_category(start_date,end_date,frame_path,sql):
+    # Function to create a table for categories in the expense frame
+    # create a global variable so that the table can be accessed by the functions outside of this function
+    global treeview_category
+    #set up a custom style to use in the table for a better font
+    custom_font = ('Arial', 18)
+    style = ttk.Style()
+    style.configure('Custom.Treeview', rowheight=30)
+    cur.execute(sql, (uid,start_date,end_date))
+    rows = cur.fetchall()
+
+    #column names that are to be shown in the GUI
+    columns = ('category', 'amount')
+    treeview_category = ttk.Treeview(frame_path, columns=columns, show='headings', height=6, style='Custom.Treeview')
+    treeview_category.grid(row=0, column=0, sticky='nsew')
+
+    # Add columns to the Treeview that correspond to the columns in the retrieved data
+    for col in columns:
+        treeview_category.heading(col, text=col.title())
+        treeview_category.column('category', width=350)
+        treeview_category.column('amount', width=350)
+
+    # Insert the retrieved data as rows in the Treeview
+    for row in rows:
+        treeview_category.insert('', tk.END, values=row)
+
+    # Apply the custom font to all items in the Treeview
+    treeview_category.tag_configure('custom_font', font=custom_font)
+    for row in treeview_category.get_children():
+        treeview_category.item(row, tags=('custom_font',))
+
+def update(radio,sql,frame_path,bar,pie,can_bar,can_pie,radio_button_start,radio_button_end):
+    selection = radio.get()
     end_date = datetime.today()
     if selection == 0:
         start_date = end_date - timedelta(days=7)
-        update_pie_chart(start_date,end_date)
-        update_bar_graph(start_date,end_date)
+        update_pie_chart(start_date,end_date,sql,pie,can_pie)
+        update_bar_graph(start_date,end_date,sql,bar,can_bar)
         update_values(start_date, end_date)
-        update_table_category_expense(start_date,end_date)
+        update_table_category(start_date,end_date,frame_path,sql)
     elif selection == 1:
         start_date = end_date - timedelta(days=30)
-        update_pie_chart(start_date,end_date)
-        update_bar_graph(start_date,end_date)
+        update_pie_chart(start_date,end_date,sql,pie,can_pie)
+        update_bar_graph(start_date,end_date,sql,bar,can_bar)
         update_values(start_date, end_date)
-        update_table_category_expense(start_date,end_date)
+        update_table_category(start_date,end_date,frame_path,sql)
     elif selection == 2:
         start_date = end_date.replace(day=1)
-        update_pie_chart(start_date,end_date)
-        update_bar_graph(start_date,end_date)
+        update_pie_chart(start_date,end_date,sql,pie,can_pie)
+        update_bar_graph(start_date,end_date,sql,bar,can_bar)
         update_values(start_date, end_date)
-        update_table_category_expense(start_date,end_date)
+        update_table_category(start_date,end_date,frame_path,sql)
     elif selection == 3:
         start_date = end_date.replace(month=1, day=1)
-        update_pie_chart(start_date,end_date)
-        update_bar_graph(start_date,end_date)
+        update_pie_chart(start_date,end_date,sql,pie,can_pie)
+        update_bar_graph(start_date,end_date,sql,bar,can_bar)
         update_values(start_date, end_date)
-        update_table_category_expense(start_date,end_date)
+        update_table_category(start_date,end_date,frame_path,sql)
     else:
-        start_date = custom_radio_button_start.get()
-        end_date = custom_radio_button_end.get()
-        update_pie_chart(start_date,end_date)
-        update_bar_graph(start_date,end_date)
+        start_date = radio_button_start.get()
+        end_date = radio_button_end.get()
+        update_pie_chart(start_date,end_date,sql,pie,can_pie)
+        update_bar_graph(start_date,end_date,sql,bar,can_bar)
         update_values(start_date, end_date)
-        update_table_category_expense(start_date,end_date)
+        update_table_category(start_date,end_date,frame_path,sql)
 def delete_selection():
     # Get the selected row
     selection = treeview_delete.selection()
@@ -533,7 +539,19 @@ def delete_selection():
     else:
         tkinter.messagebox.showerror("Error", "Please select a row to delete.")
 
-#========================decleration for the first 2 frames===============================
+
+
+#===============setting up default date values===================================
+
+total_expense = tk.StringVar()
+total_income = tk.StringVar()
+total_savings = tk.StringVar()
+
+end_date = datetime.today()
+start_date = end_date - timedelta(days=7)
+update_values(start_date, end_date)
+
+#========================decleration for the frames===============================
 
 dome.grid_columnconfigure(1, weight=1)
 dome.grid_rowconfigure(0, weight=1)
@@ -566,6 +584,19 @@ dome.frame_Expenses.right.down.subdown.grid(row=1,column=0,sticky="nswe",padx=20
 dome.frame_Expenses.right.grid(row=0,column=1,sticky="nswe",padx=20,pady=20)
 dome.frame_Expenses.left.grid(row=0,column=0,sticky="nswe",padx=20,pady=20)
 
+dome.frame_Income.left = customtkinter.CTkFrame(master=dome.frame_Income)
+dome.frame_Income.right = customtkinter.CTkFrame(master=dome.frame_Income)
+dome.frame_Income.right.up = customtkinter.CTkFrame(master=dome.frame_Income.right)
+dome.frame_Income.right.down = customtkinter.CTkFrame(master=dome.frame_Income.right)
+dome.frame_Income.right.down.subup = customtkinter.CTkFrame(master=dome.frame_Income.right.down)
+dome.frame_Income.right.down.subdown = customtkinter.CTkFrame(master=dome.frame_Income.right.down)
+dome.frame_Income.right.up.grid(row=0,column=0,sticky="nswe",padx=20,pady=20)
+dome.frame_Income.right.down.grid(row=1,column=0,sticky="nswe",padx=20,pady=20)
+dome.frame_Income.right.down.subup.grid(row=0,column=0,sticky="nswe",padx=20,pady=20)
+dome.frame_Income.right.down.subdown.grid(row=1,column=0,sticky="nswe",padx=20,pady=20)
+dome.frame_Income.right.grid(row=0,column=1,sticky="nswe",padx=20,pady=20)
+dome.frame_Income.left.grid(row=0,column=0,sticky="nswe",padx=20,pady=20)
+
 dome.frame_insert.up = customtkinter.CTkFrame(master=dome.frame_insert)
 dome.frame_insert.down = customtkinter.CTkFrame(master=dome.frame_insert)
 dome.frame_insert.up.grid(row=0,column=0,padx=20,pady=20)
@@ -578,7 +609,7 @@ dome.frame_delete.down.grid(row=1,column=0,padx=20,pady=20)
 
 #===========================Left frame=========================
 dome.frame_left.grid_rowconfigure(0, minsize=10)  # empty row with minsize as spacing
-dome.frame_left.grid_rowconfigure(5, weight=1)   # empty row as spacing
+dome.frame_left.grid_rowconfigure(7, weight=1)   # empty row as spacing
 dome.frame_left.grid_rowconfigure(8, minsize=20)  # empty row with minsize as spacing
 dome.frame_left.grid_rowconfigure(11, minsize=10)
 
@@ -641,16 +672,96 @@ Settings_button.grid(row=9, column=0, pady=10, padx=10)
 
 Logout_button = customtkinter.CTkButton(dome.frame_left, text = "Logout",command=logout)
 Logout_button.grid(row=10,column=0,pady=10,padx=10)
+#============================Income Frame=================================
+barfig_in = Figure(figsize=(8, 4), dpi=100)
+barax_in = barfig_in.add_subplot()
+bar_canvas_income = FigureCanvasTkAgg(barfig_in, master=dome.frame_Income.left)
+bar_canvas_income.get_tk_widget().grid(row=2, column=0)
+barfig_in.suptitle('Income for the specified time period')
+
+fig_in = plt.Figure(figsize=(8,5), dpi=100)
+pie_ax_in = fig_in.add_subplot(111)
+pie_ax_in.set_title("Income in Percentage")
+pie_ax_in.axis('equal')
+canvas_income = FigureCanvasTkAgg(fig_in, master=dome.frame_Income.left)
+canvas_income.draw()
+canvas_income.get_tk_widget().grid(row=1,column=0)
+
+radio_var_income = tkinter.IntVar(value=0)
+sql_statement_income = "SELECT distinct(source), sum(amount) FROM income where id = %s and dayofincome >= %s and dayofincome <= %s group by distinct(source) order by sum(amount) desc"
+
+week_radio_button_income = customtkinter.CTkRadioButton(master=dome.frame_Income.right.up,
+                                                           variable=radio_var_income,
+                                                           value=0,text="Show data for the last 7 days",command=lambda: update(radio_var_income,
+                                                                                                                               sql_statement_income,
+                                                                                                                               dome.frame_Income.right.down.subdown,
+                                                                                                                               barax_in,pie_ax_in,bar_canvas_income,canvas_income,
+                                                                                                                               custom_radio_button_start_income,custom_radio_button_end_income))
+month_radio_button_income = customtkinter.CTkRadioButton(master=dome.frame_Income.right.up,
+                                                           variable=radio_var_income,
+                                                           value=1,text="Show data for the last 30 days",command=lambda: update(radio_var_income,
+                                                                                                                               sql_statement_income,
+                                                                                                                               dome.frame_Income.right.down.subdown,
+                                                                                                                               barax_in,pie_ax_in,bar_canvas_income,canvas_income,
+                                                                                                                               custom_radio_button_start_income,custom_radio_button_end_income))
+half_year_radio_button_income = customtkinter.CTkRadioButton(master=dome.frame_Income.right.up,
+                                                           variable=radio_var_income,
+                                                           value=2,text="Show data for This month",command=lambda: update(radio_var_income,
+                                                                                                                               sql_statement_income,
+                                                                                                                               dome.frame_Income.right.down.subdown,
+                                                                                                                               barax_in,pie_ax_in,bar_canvas_income,canvas_income,
+                                                                                                                               custom_radio_button_start_income,custom_radio_button_end_income))
+year_radio_button_income = customtkinter.CTkRadioButton(master=dome.frame_Income.right.up,
+                                                           variable=radio_var_income,
+                                                           value=3,text = "Show data for this Year",command=lambda: update(radio_var_income,
+                                                                                                                               sql_statement_income,
+                                                                                                                               dome.frame_Income.right.down.subdown,
+                                                                                                                               barax_in,pie_ax_in,bar_canvas_income,canvas_income,
+                                                                                                                               custom_radio_button_start_income,custom_radio_button_end_income))
+custom_time_period_radio_button_income = customtkinter.CTkRadioButton(master=dome.frame_Income.right.up,
+                                                               variable=radio_var_income,value=4,text="Show data based on the dates specified below",command=lambda: update(radio_var_income,
+                                                                                                                               sql_statement_income,
+                                                                                                                               dome.frame_Income.right.down.subdown,
+                                                                                                                               barax_in,pie_ax_in,bar_canvas_income,canvas_income,
+                                                                                                                               custom_radio_button_start_income,custom_radio_button_end_income))
+
+custom_radio_button_start_income = DateEntry(dome.frame_Income.right.up, width=40, background='blue', foreground='white', borderwidth=2)
+custom_radio_button_end_income = DateEntry(dome.frame_Income.right.up, width=40, background='blue', foreground='white', borderwidth=2)
+label_from_income = customtkinter.CTkLabel(dome.frame_Income.right.up,text="Date starting from")
+label_to_income = customtkinter.CTkLabel(dome.frame_Income.right.up,text ="Date ending at")
+
+custom_time_period_radio_button_income.grid(row=4,column=0,padx=20,pady=20)
+custom_radio_button_start_income.grid(row=6,column=0,padx=40,pady=20)
+custom_radio_button_end_income.grid(row=6,column=1,padx=40,pady=20)
+week_radio_button_income.grid(row=0,column=0,pady=20)
+month_radio_button_income.grid(row=1,column=0,pady=20)
+half_year_radio_button_income.grid(row=2,column=0,pady=20)
+year_radio_button_income.grid(row=3,column=0,pady=20)
+label_to_income.grid(row=5,column=1,padx=40,pady=20)
+label_from_income.grid(row=5,column=0,padx=40,pady=20)
+
+label_total_expenses_INframe = customtkinter.CTkLabel(dome.frame_Income.right.down.subup,width=40,text_font=("Arial", 14, "bold"), text="Total Expenses: ")
+label_total_income_INframe = customtkinter.CTkLabel(dome.frame_Income.right.down.subup,width=40,text_font=("Arial", 14, "bold"), text="Total Income: ")
+label_total_savings_INframe = customtkinter.CTkLabel(dome.frame_Income.right.down.subup,width=40,text_font=("Arial", 14, "bold"), text="Total Savings: ")
+
+label_total_expenses_value_INframe = customtkinter.CTkLabel(dome.frame_Income.right.down.subup,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense)
+label_total_income_value_INframe = customtkinter.CTkLabel(dome.frame_Income.right.down.subup,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income)
+label_total_savings_value_INframe = customtkinter.CTkLabel(dome.frame_Income.right.down.subup,width=40,text_font=("Arial", 14, "bold"),textvariable=total_savings)
+
+label_total_expenses_INframe.grid(row=1,column=0,pady=20)
+label_total_income_INframe.grid(row=1,column=2,padx=(20,0),pady=20)
+label_total_savings_INframe.grid(row=1,column=4,padx=(20,0),pady=20)
+label_total_expenses_value_INframe.grid(row=1,column=1,pady=20)
+label_total_income_value_INframe.grid(row=1,column=3,pady=20)
+label_total_savings_value_INframe.grid(row=1,column=5,pady=20)
+
+create_table_category(start_date,end_date,dome.frame_Income.right.down.subdown,sql_statement_income)
+
+week_radio_button_income.select()
+update_pie_chart(start_date, end_date, sql_statement_income, pie_ax_in, canvas_income)
+update_bar_graph(start_date, end_date, sql_statement_income, barax_in, bar_canvas_income)
 
 #============================Expenses Frame===============================
-
-total_expense = tk.StringVar()
-total_income = tk.StringVar()
-total_savings = tk.StringVar()
-
-end_date = datetime.today()
-start_date = end_date - timedelta(days=7)
-update_values(start_date, end_date)
 
 barfig = Figure(figsize=(8, 4), dpi=100)
 barax = barfig.add_subplot()
@@ -666,25 +777,49 @@ canvas = FigureCanvasTkAgg(fig, master=dome.frame_Expenses.left)
 canvas.draw()
 canvas.get_tk_widget().grid(row=0,column=0)
 
-radio_var = tkinter.IntVar(value=0)
+radio_var_expense = tkinter.IntVar(value=0)
+sql_statement_expense = "SELECT distinct(category), sum(amount) FROM expenses where id = %s and dayofexpense >= %s and dayofexpense <= %s group by distinct(category) order by sum(amount) desc"
+
 week_radio_button = customtkinter.CTkRadioButton(master=dome.frame_Expenses.right.up,
-                                                           variable=radio_var,
-                                                           value=0,text="Show data for the last 7 days",command=update_expenses)
+                                                           variable=radio_var_expense,
+                                                           value=0,text="Show data for the last 7 days",command=lambda: update(radio_var_expense,
+                                                                                                                               sql_statement_expense,
+                                                                                                                               dome.frame_Expenses.right.down.subdown,
+                                                                                                                               barax,pie_ax,bar_canvas,canvas,
+                                                                                                                               custom_radio_button_start,custom_radio_button_end))
 month_radio_button = customtkinter.CTkRadioButton(master=dome.frame_Expenses.right.up,
-                                                           variable=radio_var,
-                                                           value=1,text="Show data for the last 30 days",command=update_expenses)
+                                                           variable=radio_var_expense,
+                                                           value=1,text="Show data for the last 30 days",command=lambda: update(radio_var_expense,
+                                                                                                                               sql_statement_expense,
+                                                                                                                               dome.frame_Expenses.right.down.subdown,
+                                                                                                                               barax,pie_ax,bar_canvas,canvas,
+                                                                                                                               custom_radio_button_start,custom_radio_button_end))
 half_year_radio_button = customtkinter.CTkRadioButton(master=dome.frame_Expenses.right.up,
-                                                           variable=radio_var,
-                                                           value=2,text="Show data for This month",command=update_expenses)
+                                                           variable=radio_var_expense,
+                                                           value=2,text="Show data for This month",command=lambda: update(radio_var_expense,
+                                                                                                                               sql_statement_expense,
+                                                                                                                               dome.frame_Expenses.right.down.subdown,
+                                                                                                                               barax,pie_ax,bar_canvas,canvas,
+                                                                                                                               custom_radio_button_start,custom_radio_button_end))
 year_radio_button = customtkinter.CTkRadioButton(master=dome.frame_Expenses.right.up,
-                                                           variable=radio_var,
-                                                           value=3,text = "Show data for this Year",command=update_expenses)
+                                                           variable=radio_var_expense,
+                                                           value=3,text = "Show data for this Year",command=lambda: update(radio_var_expense,
+                                                                                                                               sql_statement_expense,
+                                                                                                                               dome.frame_Expenses.right.down.subdown,
+                                                                                                                               barax,pie_ax,bar_canvas,canvas,
+                                                                                                                               custom_radio_button_start,custom_radio_button_end))
 custom_time_period_radio_button = customtkinter.CTkRadioButton(master=dome.frame_Expenses.right.up,
-                                                               variable=radio_var,value=4,text="Show data based on the dates specified below",command=update_expenses)
+                                                               variable=radio_var_expense,value=4,text="Show data based on the dates specified below",command=lambda: update(radio_var_expense,
+                                                                                                                               sql_statement_expense,
+                                                                                                                               dome.frame_Expenses.right.down.subdown,
+                                                                                                                               barax,pie_ax,bar_canvas,canvas,
+                                                                                                                               custom_radio_button_start,custom_radio_button_end))
+
 custom_radio_button_start = DateEntry(dome.frame_Expenses.right.up, width=40, background='blue', foreground='white', borderwidth=2)
 custom_radio_button_end = DateEntry(dome.frame_Expenses.right.up, width=40, background='blue', foreground='white', borderwidth=2)
 label_from = customtkinter.CTkLabel(dome.frame_Expenses.right.up,text="Date starting from")
 label_to = customtkinter.CTkLabel(dome.frame_Expenses.right.up,text ="Date ending at")
+
 
 
 custom_time_period_radio_button.grid(row=4,column=0,padx=20,pady=20)
@@ -697,13 +832,19 @@ year_radio_button.grid(row=3,column=0,pady=20)
 label_to.grid(row=5,column=1,padx=40,pady=20)
 label_from.grid(row=5,column=0,padx=40,pady=20)
 
+
+
 label_total_expenses = customtkinter.CTkLabel(dome.frame_Expenses.right.down.subup,width=40,text_font=("Arial", 14, "bold"), text="Total Expenses: ")
 label_total_income = customtkinter.CTkLabel(dome.frame_Expenses.right.down.subup,width=40,text_font=("Arial", 14, "bold"), text="Total Income: ")
 label_total_savings = customtkinter.CTkLabel(dome.frame_Expenses.right.down.subup,width=40,text_font=("Arial", 14, "bold"), text="Total Savings: ")
 
+
+
 label_total_expenses_value = customtkinter.CTkLabel(dome.frame_Expenses.right.down.subup,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense)
 label_total_income_value = customtkinter.CTkLabel(dome.frame_Expenses.right.down.subup,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income)
 label_total_savings_value = customtkinter.CTkLabel(dome.frame_Expenses.right.down.subup,width=40,text_font=("Arial", 14, "bold"),textvariable=total_savings)
+
+
 
 label_total_expenses.grid(row=1,column=0,pady=20)
 label_total_income.grid(row=1,column=2,padx=(20,0),pady=20)
@@ -712,9 +853,15 @@ label_total_expenses_value.grid(row=1,column=1,pady=20)
 label_total_income_value.grid(row=1,column=3,pady=20)
 label_total_savings_value.grid(row=1,column=5,pady=20)
 
-create_table_category_expense(start_date,end_date)
-#============================Insert Frames==========================
 
+
+create_table_category(start_date,end_date,dome.frame_Expenses.right.down.subdown,"SELECT distinct(category), sum(amount) FROM expenses where id = %s and dayofexpense between %s and %s group by distinct(category) order by sum(amount) desc")
+
+week_radio_button.select()
+update_pie_chart(start_date, end_date,sql_statement_expense,pie_ax,canvas)
+update_bar_graph(start_date, end_date,sql_statement_expense,barax,bar_canvas)
+
+#============================Insert Frames==========================
 
 cur.execute("SELECT category,details,amount,dayofexpense FROM expenses where id = %s order by dayofexpense desc limit 30",(uid,))
 rows = cur.fetchall()
@@ -798,16 +945,7 @@ confirm_button.grid(row=2, column=3, pady=10, padx=20, sticky="w")
 
 #===========================Default Values======================
 
-
-week_radio_button.select()
-
-
-selection = radio_var.get()
-end_date = datetime.today()
-start_date = end_date - timedelta(days=7)
-update_pie_chart(start_date, end_date)
-update_bar_graph(start_date, end_date)
-show_frame(dome.frame_Expenses)
+show_frame(dome.frame_Income)
 custom_functions.disconnect()
 
 
