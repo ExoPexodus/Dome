@@ -426,7 +426,7 @@ def update_values(start_date,end_date):
 
 
 def update_table_category(start_date,end_date,frame_path,sql):
-    # Function to update the table for categories in the expense frame
+    # Function to update the table for categories in the expense & income frames
     #check if the table exists in the subdown frame and destory it if it exists
     children = frame_path.winfo_children()
     for child in children:
@@ -439,7 +439,7 @@ def update_table_category(start_date,end_date,frame_path,sql):
     create_table_category(start_date,end_date,frame_path,sql)
 
 def create_table_category(start_date,end_date,frame_path,sql):
-    # Function to create a table for categories in the expense frame
+    # Function to create a table for categories in both income and expense frames
     # create a global variable so that the table can be accessed by the functions outside of this function
     global treeview_category
     #set up a custom style to use in the table for a better font
@@ -469,7 +469,8 @@ def create_table_category(start_date,end_date,frame_path,sql):
     for row in treeview_category.get_children():
         treeview_category.item(row, tags=('custom_font',))
 
-def update(radio,sql,frame_path,bar,pie,can_bar,can_pie,radio_button_start,radio_button_end):
+def update(radio,sql,frame_path,bar,pie,can_bar,can_pie,date_button_start,date_button_end):
+    #function to update graphs,charts and values in both income and expense frame
     selection = radio.get()
     end_date = datetime.today()
     if selection == 0:
@@ -497,8 +498,8 @@ def update(radio,sql,frame_path,bar,pie,can_bar,can_pie,radio_button_start,radio
         update_values(start_date, end_date)
         update_table_category(start_date,end_date,frame_path,sql)
     else:
-        start_date = radio_button_start.get()
-        end_date = radio_button_end.get()
+        start_date = date_button_start.get()
+        end_date = date_button_end.get()
         update_pie_chart(start_date,end_date,sql,pie,can_pie)
         update_bar_graph(start_date,end_date,sql,bar,can_bar)
         update_values(start_date, end_date)
