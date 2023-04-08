@@ -12,10 +12,6 @@ password = None
 confirm_password = None
 #=========================DB Variables=====================
 cur, conn = custom_functions.connect()
-#=======================initialising the GUI====================
-app = customtkinter.CTk()
-app.title("Dome")
-app.geometry("450x200")
 #========================Function Decleration=========================
 
 # function to switch to register frame
@@ -106,54 +102,61 @@ def on_enter_press(event):
     # simulate a button click using enter key
     authentication()
 
+
+class AuthenticationGUI:
+    def __init__(self):
+#=======================initialising the GUI====================
+        self.app = customtkinter.CTk()
+        self.app.title("Dome")
+        self.app.geometry("450x200")
 #=============================Login Frame==================================
-login = customtkinter.CTkFrame(app)
-button_log = customtkinter.CTkButton(login, text="Login", command=authentication)
-button_log.grid(column=0,row=3,sticky= "s")
-button_reg = customtkinter.CTkButton(login, text="Register", command=register)
-button_reg.grid(column=1,row=3,sticky= "s")
+        self.login = customtkinter.CTkFrame(app)
+        self.button_log = customtkinter.CTkButton(login, text="Login", command=authentication)
+        self.button_log.grid(column=0,row=3,sticky= "s")
+        self.button_reg = customtkinter.CTkButton(login, text="Register", command=register)
+        self.button_reg.grid(column=1,row=3,sticky= "s")
 
-label_email = customtkinter.CTkLabel(master=login,text = "Username")
-label_email.grid(row = 0,column = 0)
-label_pass = customtkinter.CTkLabel(master=login,text= "Password")
-label_pass.grid(row=1,column = 0)
+        self.label_email = customtkinter.CTkLabel(master=login,text = "Username")
+        self.label_email.grid(row = 0,column = 0)
+        self.label_pass = customtkinter.CTkLabel(master=login,text= "Password")
+        self.label_pass.grid(row=1,column = 0)
 
-name_entry = customtkinter.CTkEntry(master=login,placeholder_text="Enter your username")
-name_entry.grid(row=0, column=1,columnspan=2)
-password_entry = customtkinter.CTkEntry(master=login,placeholder_text="Enter your password")
-password_entry.grid(row=1, column=1,columnspan=2)
+        self.name_entry = customtkinter.CTkEntry(master=login,placeholder_text="Enter your username")
+        self.name_entry.grid(row=0, column=1,columnspan=2)
+        self.password_entry = customtkinter.CTkEntry(master=login,placeholder_text="Enter your password")
+        self.password_entry.grid(row=1, column=1,columnspan=2)
 
 #============================Register Frame=================================
 
-reg = customtkinter.CTkFrame(app)
+        self.reg = customtkinter.CTkFrame(app)
 
-username_entry = customtkinter.CTkEntry(master=reg,placeholder_text="Enter your Username")
-username_entry.grid(row=0, column=1,columnspan=2)
-email_entry1 = customtkinter.CTkEntry(master=reg,placeholder_text="Enter your Email")
-email_entry1.grid(row=1, column=1,columnspan=2)
-password_entry1 = customtkinter.CTkEntry(master=reg,placeholder_text="Enter your Password")
-password_entry1.grid(row=2, column=1,columnspan=2)
-confirm_password_entry = customtkinter.CTkEntry(master=reg,placeholder_text="Retype your Password")
-confirm_password_entry.grid(row=3, column=1,columnspan=2)
-
-
-
-label_username = customtkinter.CTkLabel(master=reg,text = "Username")
-label_username.grid(row = 0,column = 0)
-label_email1 = customtkinter.CTkLabel(master=reg,text = "Email")
-label_email1.grid(row = 1,column = 0)
-label_pass1 = customtkinter.CTkLabel(master=reg,text= "Password")
-label_pass1.grid(row=2,column = 0)
-label_confirm_pass = customtkinter.CTkLabel(master=reg,text= "Confirm Password")
-label_confirm_pass.grid(row=3,column = 0)
+        self.username_entry = customtkinter.CTkEntry(master=reg,placeholder_text="Enter your Username")
+        self.username_entry.grid(row=0, column=1,columnspan=2)
+        self.email_entry1 = customtkinter.CTkEntry(master=reg,placeholder_text="Enter your Email")
+        self.email_entry1.grid(row=1, column=1,columnspan=2)
+        self.password_entry1 = customtkinter.CTkEntry(master=reg,placeholder_text="Enter your Password")
+        self.password_entry1.grid(row=2, column=1,columnspan=2)
+        self.confirm_password_entry = customtkinter.CTkEntry(master=reg,placeholder_text="Retype your Password")
+        self.confirm_password_entry.grid(row=3, column=1,columnspan=2)
 
 
-button_create_acc = customtkinter.CTkButton(reg, text="Create Account", command=account_creation)
-button_create_acc.grid(column=1,row=5,sticky= "s")
-button_back = customtkinter.CTkButton(reg, text="Go back", command=back)
-button_back.grid(column=2,row=5,sticky= "s")
 
-app.bind('<Return>', on_enter_press)
-login.pack()
-custom_functions.disconnect()
+        self.label_username = customtkinter.CTkLabel(master=reg,text = "Username")
+        self.label_username.grid(row = 0,column = 0)
+        self.label_email1 = customtkinter.CTkLabel(master=reg,text = "Email")
+        self.label_email1.grid(row = 1,column = 0)
+        self.label_pass1 = customtkinter.CTkLabel(master=reg,text= "Password")
+        self.label_pass1.grid(row=2,column = 0)
+        self.label_confirm_pass = customtkinter.CTkLabel(master=reg,text= "Confirm Password")
+        self.label_confirm_pass.grid(row=3,column = 0)
+
+
+        self.button_create_acc = customtkinter.CTkButton(reg, text="Create Account", command=account_creation)
+        self.button_create_acc.grid(column=1,row=5,sticky= "s")
+        self.button_back = customtkinter.CTkButton(reg, text="Go back", command=back)
+        self.button_back.grid(column=2,row=5,sticky= "s")
+
+        self.app.bind('<Return>', on_enter_press)
+        self.login.pack()
+
 app.mainloop()
