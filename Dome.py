@@ -41,6 +41,8 @@ def logout():
     custom_functions.disconnect()
     if len(name) > 0:
         dome.destroy()
+        log = Login_screen.AuthenticationGUI()
+        log.app.mainloop()
 
 
 def insert_exp():
