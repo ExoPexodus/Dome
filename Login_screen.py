@@ -2,9 +2,6 @@ import tkinter.messagebox   # For the default errors and message popups
 import customtkinter     # Custom Tkinter library for a cool Tkinter look
 import custom_functions     # Custom function python script for additional database connection related functions
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
-
 #=============Global Variables===============
 username = None
 email = None
@@ -16,12 +13,15 @@ cur, conn = custom_functions.connect()
 #function to switch to welcome screen showing the username of the user
 def authentication(name,password):
     global auth
+    auth = "Not Authenticated"
     selectscript = "Select * from users where name = '%s' and pass = '%s'"%(name,password)
     cur.execute(selectscript)
     if len(name) == 0:
         tkinter.messagebox.showerror("Error", "please fill the username field")
+        return auth
     elif len(password) == 0:
         tkinter.messagebox.showerror("Error","please fill the password field")
+        return auth
     elif cur.fetchall():
         print("Account Authenticated")
         auth = "Account Authenticated"
@@ -29,6 +29,7 @@ def authentication(name,password):
     else:
         print("Credentials don't exist")
         tkinter.messagebox.showerror("Error","Error: The credentials do not match with the database")
+        return auth
 
 def account_creation(username,email,password,confirm_password):
 
@@ -64,12 +65,11 @@ def account_creation(username,email,password,confirm_password):
                     print("The passwords do not match")
                     tkinter.messagebox.showerror("Error", "Passwords do not match")
 
-
-def return_name(username):
-    global name
-    name = username
 class AuthenticationGUI:
     def __init__(self):
+        customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
+        customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
+
 #=======================initialising the GUI====================
         self.app = customtkinter.CTk()
         self.app.title("Dome")
@@ -128,8 +128,7 @@ class AuthenticationGUI:
         password = self.password_entry.get()
         authentication(username,password)
         if auth == "Account Authenticated":
-            return_name(username)
-            self.bef_welcome()
+            self.welcome()
 
 
     def register(self):
@@ -154,17 +153,12 @@ class AuthenticationGUI:
         self.login.pack_forget()
         self.reg.pack()
 
-    def bef_welcome(self):
-        self.app.destroy()
+    def welcome(self):
         name = self.name_entry.get()
-        welcome_screen = customtkinter.CTk()
-        welcome_screen.title("Dome")
-        welcome_screen.geometry("300x200")
-
-        welcome_label = customtkinter.CTkLabel(welcome_screen, text="Welcome " + name)
-        welcome_label.pack(pady=5)
-        welcome_screen.after(10, welcome_screen.destroy())
-        welcome_screen.mainloop()
-
-log = AuthenticationGUI()
-log.app.mainloop()
+        self.app.destroy()
+        import Dome
+        if len(name) > 0:
+            cur.execute('select id from users where name = %s', (name,))
+            row = cur.fetchone()
+            uid = int(row[0])
+            Dome.dome_main_app(uid,name)
