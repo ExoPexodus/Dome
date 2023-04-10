@@ -464,11 +464,28 @@ def dome_main_app(uid,name):
     def insert_exp(uid):
         # Gui popup for data insertion in the expenses table
         def enter_data_in_expenses(uid):
-            details = entry_details.get()
+            details = entry_details.get().strip()
             amount = entry_amount.get()
-            date = set_date.get()
             category = category_selection.get()
             transaction_type = transaction_type_selection.get()
+            date = datetime.strptime(set_date.get(), "%m/%d/%y")
+
+            if len(details) < 1:
+                tkinter.messagebox.showerror("Message", "Please enter the details")
+                conn.rollback()
+                return 0
+            elif int(amount) < 1:
+                tkinter.messagebox.showerror("Message", "Please enter a valid amount")
+                conn.rollback()
+                return 0
+            elif not details.isalpha():
+                tkinter.messagebox.showerror("Message", "Please enter details without any number and special characters")
+                conn.rollback()
+                return 0
+            elif date > end_date:
+                tkinter.messagebox.showerror("Message", "Please enter a date before today")
+                conn.rollback()
+                return 0
 
             insert_script = "insert into expenses(id,details,amount,dayofexpense,category,transaction_type) values(%s,%s,%s,%s,%s,%s)"
             values = (uid, details, amount, date, category, transaction_type)
@@ -512,9 +529,26 @@ def dome_main_app(uid,name):
         def enter_data_in_income(uid):
             details = entry_details.get()
             amount = entry_amount.get()
-            date = set_date.get()
             category = category_selection.get()
             transaction_type = transaction_type_selection.get()
+            date = datetime.strptime(set_date.get(), "%m/%d/%y")
+
+            if len(details) < 1:
+                tkinter.messagebox.showerror("Message", "Please enter the details")
+                conn.rollback()
+                return 0
+            elif int(amount) < 1:
+                tkinter.messagebox.showerror("Message", "Please enter a valid amount")
+                conn.rollback()
+                return 0
+            elif not details.isalpha():
+                tkinter.messagebox.showerror("Message", "Please enter details without any number and special characters")
+                conn.rollback()
+                return 0
+            elif date > end_date:
+                tkinter.messagebox.showerror("Message", "Please enter a date before today")
+                conn.rollback()
+                return 0
 
             insert_script = "insert into income(id,details,amount,dayofincome,source,transaction_type) values(%s,%s,%s,%s,%s,%s)"
             values = (uid, details, amount, date, category, transaction_type)
