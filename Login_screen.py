@@ -60,7 +60,8 @@ def account_creation(username,email,password,confirm_password):
                     conn.commit()
                     print("account created")
                     tkinter.messagebox.showinfo("Message", "Account Successfully Created")
-                    back()
+                    authenticate = AuthenticationGUI()
+                    authenticate.back()
                 else:
                     print("The passwords do not match")
                     tkinter.messagebox.showerror("Error", "Passwords do not match")
