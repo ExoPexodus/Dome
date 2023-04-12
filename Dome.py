@@ -465,10 +465,16 @@ def dome_main_app(uid,name):
         # Gui popup for data insertion in the expenses table
         def enter_data_in_expenses(uid):
             details = entry_details.get().strip()
-            amount = entry_amount.get()
+#            amount = entry_amount.get()
             category = category_selection.get()
             transaction_type = transaction_type_selection.get()
             date = datetime.strptime(set_date.get(), "%m/%d/%y")
+
+            try:
+                amount = int(entry_amount.get())
+            except ValueError:
+                tkinter.messagebox.showerror("Error", "Please enter a valid amount")
+                return 0
 
             if len(details) < 1:
                 tkinter.messagebox.showerror("Message", "Please enter the details")
@@ -478,8 +484,9 @@ def dome_main_app(uid,name):
                 tkinter.messagebox.showerror("Message", "Please enter a valid amount")
                 conn.rollback()
                 return 0
-            elif not details.isalpha():
-                tkinter.messagebox.showerror("Message", "Please enter details without any number and special characters")
+            elif not details.replace(' ', '').isalnum():
+                tkinter.messagebox.showerror("Message",
+                                             "Please enter details without any number and special characters")
                 conn.rollback()
                 return 0
             elif date > end_date:
@@ -528,10 +535,15 @@ def dome_main_app(uid,name):
         # Gui popup for data insertion in the income table
         def enter_data_in_income(uid):
             details = entry_details.get()
-            amount = entry_amount.get()
             category = category_selection.get()
             transaction_type = transaction_type_selection.get()
             date = datetime.strptime(set_date.get(), "%m/%d/%y")
+
+            try:
+                amount = int(entry_amount.get())
+            except ValueError:
+                tkinter.messagebox.showerror("Error", "Please enter a valid amount")
+                return 0
 
             if len(details) < 1:
                 tkinter.messagebox.showerror("Message", "Please enter the details")
@@ -541,8 +553,9 @@ def dome_main_app(uid,name):
                 tkinter.messagebox.showerror("Message", "Please enter a valid amount")
                 conn.rollback()
                 return 0
-            elif not details.isalpha():
-                tkinter.messagebox.showerror("Message", "Please enter details without any number and special characters")
+            elif not details.replace(' ', '').isalnum():
+                tkinter.messagebox.showerror("Message",
+                                             "Please enter details without any number and special characters")
                 conn.rollback()
                 return 0
             elif date > end_date:
