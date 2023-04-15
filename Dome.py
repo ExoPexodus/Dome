@@ -26,6 +26,7 @@ def logout(name):
         log.app.mainloop()
 
 def create_table_income(uid):
+    custom_functions.check_cursor()
     # function to create a table for income in the GUI
     # Fetch data from the specified table
     cur.execute(f"SELECT source, details, amount, dayofincome FROM income where id = %s ORDER BY dayofincome DESC LIMIT 30",(uid,))
@@ -49,6 +50,7 @@ def create_table_income(uid):
         treeview.insert('', tk.END, values=row)
 
 def create_table_expense(uid):
+    custom_functions.check_cursor()
     # function to create a table for expenses in the GUI
     cur.execute(
         "SELECT category,details,amount,dayofexpense FROM expenses where id = %s order by dayofexpense desc limit 30",
@@ -124,6 +126,7 @@ def switch_table_income(uid):
 
 
 def create_double_table(uid):
+    custom_functions.check_cursor()
     #function to create two different tables for both expenses and income
     #destory any pre-made tables after looking for them with wininfo_childeren()
     children = dome.frame_insert.up.winfo_children()
@@ -212,11 +215,7 @@ def switch_table_expense_delete(uid):
 
 
 def make_changes():
-
-    color = combobox_color.get()
     appearance = combobox_apperance.get()
-
-    customtkinter.set_default_color_theme(color)
     customtkinter.set_appearance_mode(appearance)
     dome.state("zoomed")
 
@@ -235,8 +234,6 @@ def fetch_data(start_date, end_date,sql,uid):
     except psycopg2.Error as e:
         # Log the error or display an error message
         print("Error fetching data:", e)
-        # Rollback the transaction and start a new one
-        cur.rollback()
 # function to calculate percentage for each category
 def calculate_percentage(data):
     total = sum(data.values())
@@ -359,6 +356,7 @@ def create_table_category(start_date,end_date,frame_path,sql,uid):
         treeview_category.item(row, tags=('custom_font',))
 
 def update(radio,sql,frame_path,bar,pie,can_bar,can_pie,date_button_start,date_button_end,uid):
+    custom_functions.check_cursor()
     #function to update graphs,charts and values in both income and expense frame
     selection = radio.get()
     end_date = datetime.today()
@@ -433,7 +431,7 @@ def delete_selection():
 
 
 def dome_main_app(uid,name):
-
+    custom_functions.check_cursor()
     customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
     customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
     # initialising a GUI using custom Tkinter
@@ -1053,7 +1051,7 @@ def dome_main_app(uid,name):
 
 #===========================settings frame======================
 
-    fourth_label = customtkinter.CTkLabel(dome.frame_settings, text="Modes & Theme")
+    fourth_label = customtkinter.CTkLabel(dome.frame_settings, text="Theme")
     fourth_label.grid(row=1,column=1)
 
     combobox_apperance = customtkinter.CTkComboBox(master=dome.frame_settings,
@@ -1061,13 +1059,8 @@ def dome_main_app(uid,name):
 
     combobox_apperance.grid(row=2, column=1, pady=10, padx=20, sticky="w")
 
-    combobox_color = customtkinter.CTkComboBox(master=dome.frame_settings,
-                                                values=["green", "dark-blue", "blue"])
-
-
-    combobox_color.grid(row=2, column=2, pady=10, padx=20, sticky="w")
     confirm_button = customtkinter.CTkButton(master=dome.frame_settings,text="Apply Changes",command=make_changes)
-    confirm_button.grid(row=2, column=3, pady=10, padx=20, sticky="w")
+    confirm_button.grid(row=2, column=2, pady=10, padx=20, sticky="w")
 
 #===========================Default Values======================
 

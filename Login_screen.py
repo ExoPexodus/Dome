@@ -12,6 +12,7 @@ cur, conn = custom_functions.connect()
 #========================Function Decleration=========================
 #function to switch to welcome screen showing the username of the user
 def authentication(name,password):
+    custom_functions.check_cursor()
     global auth
     auth = "Not Authenticated"
     selectscript = "Select * from users where name = '%s' and pass = '%s'"%(name,password)
@@ -32,7 +33,7 @@ def authentication(name,password):
         return auth
 
 def account_creation(username,email,password,confirm_password):
-
+        custom_functions.check_cursor()
         check_user_script = "select * from users where name = '%s'"%(username)
         check_email_script = "select * from users where email = '%s'"%(email)
         if len(username) == 0:

@@ -32,10 +32,12 @@ def disconnect():
         cur.close()
         print("successfully disconnected")
 
+
 def bp():
     print("button pressed")
 
 def update_acc_analysis(radio,sql_exp,sql_inc,line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,date_button_start,date_button_end,uid,text1,text2):
+    check_cursor()
     selection = radio.get()
     end_date = datetime.today()
     if selection == 0:
@@ -65,6 +67,13 @@ def update_acc_analysis(radio,sql_exp,sql_inc,line_canvas_exp,line_ax_exp,line_c
         line_graph(sql_inc,uid,start_date,end_date,line_canvas_inc,line_ax_inc,text2)
 
 cur, conn = connect()
+
+def check_cursor():
+    """
+    Check if a cursor is closed, and if it is, rollback the connection to restore it.
+    """
+    if cur.closed:
+        cur.connection.rollback()
 def line_graph(sql,uid,start_date,end_date,canvas,ax,text):
 
     ax.clear() # clear previous chart
