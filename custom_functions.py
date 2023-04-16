@@ -3,6 +3,7 @@ import psycopg2.extras
 import configparser
 import os
 from datetime import datetime, timedelta
+import tkinter as tk
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
@@ -44,29 +45,104 @@ def update_acc_analysis(radio,sql_exp,sql_inc,line_canvas_exp,line_ax_exp,line_c
         start_date = end_date - timedelta(days=7)
         line_graph(sql_exp,uid,start_date,end_date,line_canvas_exp,line_ax_exp,text1)
         line_graph(sql_inc,uid,start_date,end_date,line_canvas_inc,line_ax_inc,text2)
+        update_values_analysis(start_date, end_date, uid)
 
     elif selection == 1:
         start_date = end_date - timedelta(days=30)
         line_graph(sql_exp,uid,start_date,end_date,line_canvas_exp,line_ax_exp,text1)
         line_graph(sql_inc,uid,start_date,end_date,line_canvas_inc,line_ax_inc,text2)
+        update_values_analysis(start_date, end_date, uid)
 
     elif selection == 2:
         start_date = end_date.replace(day=1)
         line_graph(sql_exp,uid,start_date,end_date,line_canvas_exp,line_ax_exp,text1)
         line_graph(sql_inc,uid,start_date,end_date,line_canvas_inc,line_ax_inc,text2)
+        update_values_analysis(start_date, end_date, uid)
 
     elif selection == 3:
         start_date = end_date.replace(month=1, day=1)
         line_graph(sql_exp,uid,start_date,end_date,line_canvas_exp,line_ax_exp,text1)
         line_graph(sql_inc,uid,start_date,end_date,line_canvas_inc,line_ax_inc,text2)
+        update_values_analysis(start_date, end_date, uid)
 
     else:
         start_date = date_button_start.get()
         end_date = date_button_end.get()
         line_graph(sql_exp,uid,start_date,end_date,line_canvas_exp,line_ax_exp,text1)
         line_graph(sql_inc,uid,start_date,end_date,line_canvas_inc,line_ax_inc,text2)
+        update_values_analysis(start_date, end_date, uid)
 
 cur, conn = connect()
+
+
+def update_values_analysis(start_date, end_date, uid):
+    total_expense_savings = tk.StringVar()
+    total_income_savings = tk.StringVar()
+    total_expense_cash = tk.StringVar()
+    total_income_cash = tk.StringVar()
+    total_expense_card = tk.StringVar()
+    total_income_card = tk.StringVar()
+    cur.execute(
+        'select sum(amount) from expenses where id = %s and dayofexpense between %s and %s and transaction_type = %s',
+        (uid, start_date, end_date, "savings"))
+    row = cur.fetchone()
+    if row is not None and row[0] is not None:
+        val1 = int(row[0])
+    else:
+        val1 = 0
+    total_expense_savings.set(val1)
+
+    cur.execute(
+        'select sum(amount) from income where id = %s and dayofincome between %s and %s and transaction_type = %s',
+        (uid, start_date, end_date,"savings"))
+    row1 = cur.fetchone()
+    if row is not None and row[0] is not None:
+        val2 = int(row1[0])
+    else:
+        val2 = 0
+    total_income_savings.set(val2)
+
+    cur.execute(
+        'select sum(amount) from expenses where id = %s and dayofexpense between %s and %s and transaction_type = %s',
+        (uid, start_date, end_date,"cash"))
+    row = cur.fetchone()
+    if row is not None and row[0] is not None:
+        val3 = int(row[0])
+    else:
+        val3 = 0
+    total_expense_cash.set(val3)
+
+    cur.execute(
+        'select sum(amount) from income where id = %s and dayofincome between %s and %s and transaction_type = %s',
+        (uid, start_date, end_date,"cash"))
+    row1 = cur.fetchone()
+    if row is not None and row[0] is not None:
+        val4 = int(row1[0])
+    else:
+        val4 = 0
+    total_income_cash.set(val4)
+
+    cur.execute(
+        'select sum(amount) from expenses where id = %s and dayofexpense between %s and %s and transaction_type = %s',
+        (uid, start_date, end_date,"card"))
+    row = cur.fetchone()
+    if row is not None and row[0] is not None:
+        val5 = int(row[0])
+    else:
+        val5 = 0
+    total_expense_card.set(val5)
+
+    cur.execute(
+        'select sum(amount) from income where id = %s and dayofincome between %s and %s and transaction_type = %s',
+        (uid, start_date, end_date,"card"))
+    row1 = cur.fetchone()
+    if row is not None and row[0] is not None:
+        val6 = int(row1[0])
+    else:
+        val6 = 0
+    total_income_card.set(val6)
+
+    return total_expense_savings, total_income_savings, total_expense_cash, total_income_cash, total_expense_card, total_income_card
 
 def check_cursor():
     """

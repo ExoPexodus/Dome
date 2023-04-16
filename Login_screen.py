@@ -1,7 +1,7 @@
 import tkinter.messagebox   # For the default errors and message popups
 import customtkinter     # Custom Tkinter library for a cool Tkinter look
 import custom_functions     # Custom function python script for additional database connection related functions
-
+import sys
 #=============Global Variables===============
 username = None
 email = None
@@ -125,6 +125,8 @@ class AuthenticationGUI:
 
         self.app.bind('<Return>', self.on_enter_press)
         self.login.pack()
+
+        self.app.protocol("WM_DELETE_WINDOW",self.on_closing)
     def authenticate(self):
         username = self.name_entry.get()
         password = self.password_entry.get()
@@ -164,3 +166,7 @@ class AuthenticationGUI:
             row = cur.fetchone()
             uid = int(row[0])
             Dome.dome_main_app(uid,name)
+
+    def on_closing(self):
+        custom_functions.disconnect()
+        sys.exit()
