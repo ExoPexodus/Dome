@@ -361,7 +361,7 @@ def create_table_category(start_date,end_date,frame_path,sql,uid):
         treeview_category.item(row, tags=('custom_font',))
 
 def update(radio,sql,frame_path,bar,pie,can_bar,can_pie,date_button_start,date_button_end,uid):
-    custom_functions.check_cursor()
+    custom_functions.check_cursor(cur)
     #function to update graphs,charts and values in both income and expense frame
     selection = radio.get()
     end_date = datetime.today()
@@ -436,7 +436,6 @@ def delete_selection():
 
 
 def dome_main_app(uid,name):
-    custom_functions.check_cursor()
     customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
     customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
     # initialising a GUI using custom Tkinter
@@ -476,7 +475,6 @@ def dome_main_app(uid,name):
     end_date = datetime.today()
     start_date = end_date - timedelta(days=7)
     update_values(start_date, end_date,uid)
-    custom_functions.update_values_analysis(start_date, end_date, uid)
 #===================setting up two mini gui popups================
     def insert_exp(uid):
         # Gui popup for data insertion in the expenses table
@@ -668,8 +666,8 @@ def dome_main_app(uid,name):
     dome.frame_acc_analysis.right.down = customtkinter.CTkFrame(master=dome.frame_acc_analysis.right)
     dome.frame_acc_analysis.left.grid(row=0,column=0, padx=20, pady=20)
     dome.frame_acc_analysis.right.grid(row=0,column=1, pady=20, padx=(0,20))
-    dome.frame_acc_analysis.right.up.grid(row=0,column=0, pady=20, padx=(0,20))
-    dome.frame_acc_analysis.right.down.grid(row=1,column=0, pady=20, padx=(0,20))
+    dome.frame_acc_analysis.right.up.grid(row=0,column=0, pady=20, padx=(20,20))
+    dome.frame_acc_analysis.right.down.grid(row=1,column=0, pady=20, padx=(20,20))
 
     dome.frame_insert.up = customtkinter.CTkFrame(master=dome.frame_insert)
     dome.frame_insert.down = customtkinter.CTkFrame(master=dome.frame_insert,height=100)
@@ -806,45 +804,45 @@ def dome_main_app(uid,name):
     sql_statement_analysis_income = "select distinct(dayofincome) as date,sum(amount) as amount,transaction_type from income where dayofincome between %s and %s and id = %s group by date,transaction_type order by date desc;"
     expense_text = "Data for Expense"
     income_text = "Data for Income"
-    week_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.down,
+    week_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.up,
                                                            variable=radio_var_analysis,
                                                            value=0,text="Show data for the last 7 days",command=lambda: custom_functions.update_acc_analysis(radio_var_analysis,
                                                                                                                                sql_statement_analysis_expense,
                                                                                                                                sql_statement_analysis_income,
                                                                                                                                line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,
-                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text))
-    month_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.down,
+                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card))
+    month_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.up,
                                                            variable=radio_var_analysis,
                                                            value=1,text="Show data for the last 30 days",command=lambda: custom_functions.update_acc_analysis(radio_var_analysis,
                                                                                                                                sql_statement_analysis_expense,
                                                                                                                                sql_statement_analysis_income,
                                                                                                                                line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,
-                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text))
-    half_year_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.down,
+                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card))
+    half_year_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.up,
                                                            variable=radio_var_analysis,
                                                            value=2,text="Show data for This month",command=lambda: custom_functions.update_acc_analysis(radio_var_analysis,
                                                                                                                                sql_statement_analysis_expense,
                                                                                                                                sql_statement_analysis_income,
                                                                                                                                line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,
-                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text))
-    year_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.down,
+                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card))
+    year_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.up,
                                                            variable=radio_var_analysis,
                                                            value=3,text = "Show data for this Year",command=lambda: custom_functions.update_acc_analysis(radio_var_analysis,
                                                                                                                                sql_statement_analysis_expense,
                                                                                                                                sql_statement_analysis_income,
                                                                                                                                line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,
-                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text))
-    custom_time_period_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.down,
+                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card))
+    custom_time_period_radio_button_analysis = customtkinter.CTkRadioButton(master=dome.frame_acc_analysis.right.up,
                                                                variable=radio_var_analysis,value=4,text="Show data based on the dates specified below",command=lambda: custom_functions.update_acc_analysis(radio_var_analysis,
                                                                                                                                sql_statement_analysis_expense,
                                                                                                                                sql_statement_analysis_income,
                                                                                                                                line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,
-                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text))
+                                                                                                                               custom_radio_button_start_analysis,custom_radio_button_end_analysis,uid,expense_text,income_text,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card))
 
-    custom_radio_button_start_analysis = DateEntry(dome.frame_acc_analysis.right.down, width=40, background='blue', foreground='white', borderwidth=2)
-    custom_radio_button_end_analysis = DateEntry(dome.frame_acc_analysis.right.down, width=40, background='blue', foreground='white', borderwidth=2)
-    label_from_income_analysis = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,text="Date starting from")
-    label_to_income_analysis = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,text ="Date ending at")
+    custom_radio_button_start_analysis = DateEntry(dome.frame_acc_analysis.right.up, width=40, background='blue', foreground='white', borderwidth=2)
+    custom_radio_button_end_analysis = DateEntry(dome.frame_acc_analysis.right.up, width=40, background='blue', foreground='white', borderwidth=2)
+    label_from_income_analysis = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,text="Date starting from")
+    label_to_income_analysis = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,text ="Date ending at")
 
     custom_time_period_radio_button_analysis.grid(row=4,column=0,padx=20,pady=20)
     custom_radio_button_start_analysis.grid(row=6,column=0,padx=40,pady=20)
@@ -856,19 +854,19 @@ def dome_main_app(uid,name):
     label_to_income_analysis.grid(row=5,column=1,padx=40,pady=20)
     label_from_income_analysis.grid(row=5,column=0,padx=40,pady=20)
 
-    label_total_expenses = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"), text="Total Expenses: ")
-    label_total_income = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"), text="Total Income: ")
-    label_acc_types = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"), text="Acc Types: ")
-    label_Savings = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"), text="Savings ")
-    label_cash = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"), text="Cash ")
-    label_card = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"), text="Card")
+    label_total_expenses = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"), text="Total Expenses: ")
+    label_total_income = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"), text="Total Income: ")
+    label_acc_types = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"), text="Acc Types: ")
+    label_Savings = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"), text="Savings ")
+    label_cash = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"), text="Cash ")
+    label_card = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"), text="Card")
 
-    label_total_expenses_value_savings = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense_savings)
-    label_total_income_value_savings = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income_savings)
-    label_total_expenses_value_cash = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense_cash)
-    label_total_income_value_cash = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income_cash)
-    label_total_expenses_value_card = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense_card)
-    label_total_income_value_card = customtkinter.CTkLabel(dome.frame_acc_analysis.right.up,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income_card)
+    label_total_expenses_value_savings = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense_savings)
+    label_total_income_value_savings = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income_savings)
+    label_total_expenses_value_cash = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense_cash)
+    label_total_income_value_cash = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income_cash)
+    label_total_expenses_value_card = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"),textvariable=total_expense_card)
+    label_total_income_value_card = customtkinter.CTkLabel(dome.frame_acc_analysis.right.down,width=40,text_font=("Arial", 14, "bold"),textvariable=total_income_card)
 
     label_acc_types.grid(row=0,column=0,sticky="nsew")
     label_total_income.grid(row=1,column=0,sticky="nsew")
@@ -883,12 +881,13 @@ def dome_main_app(uid,name):
     label_total_income_value_card.grid(row=1,column=3,sticky="nsew")
     label_total_expenses_value_card.grid(row=2,column=3,sticky="nsew")
 
+
     custom_functions.update_acc_analysis(radio_var_analysis,
                                          sql_statement_analysis_expense,
                                          sql_statement_analysis_income,
                                          line_canvas_exp, line_ax_exp, line_canvas_inc, line_ax_inc,
                                          custom_radio_button_start_analysis, custom_radio_button_end_analysis, uid,
-                                         expense_text, income_text)
+                                         expense_text, income_text,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card)
     week_radio_button_analysis.select()
 #============================Income Frame=================================
     barfig_in = Figure(figsize=(8, 4), dpi=100)

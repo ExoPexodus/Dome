@@ -12,7 +12,7 @@ cur, conn = custom_functions.connect()
 #========================Function Decleration=========================
 #function to switch to welcome screen showing the username of the user
 def authentication(name,password):
-    custom_functions.check_cursor()
+    custom_functions.check_cursor(cur)
     global auth
     auth = "Not Authenticated"
     selectscript = "Select * from users where name = '%s' and pass = '%s'"%(name,password)
