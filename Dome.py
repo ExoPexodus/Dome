@@ -30,7 +30,7 @@ def logout(name):
         log.app.mainloop()
 
 def create_table_income(uid):
-    custom_functions.check_cursor()
+    custom_functions.check_cursor(cur)
     # function to create a table for income in the GUI
     # Fetch data from the specified table
     cur.execute(f"SELECT source, details, amount, dayofincome FROM income where id = %s ORDER BY dayofincome DESC LIMIT 30",(uid,))
@@ -54,7 +54,7 @@ def create_table_income(uid):
         treeview.insert('', tk.END, values=row)
 
 def create_table_expense(uid):
-    custom_functions.check_cursor()
+    custom_functions.check_cursor(cur)
     # function to create a table for expenses in the GUI
     cur.execute(
         "SELECT category,details,amount,dayofexpense FROM expenses where id = %s order by dayofexpense desc limit 30",
@@ -130,7 +130,7 @@ def switch_table_income(uid):
 
 
 def create_double_table(uid):
-    custom_functions.check_cursor()
+    custom_functions.check_cursor(cur)
     #function to create two different tables for both expenses and income
     #destory any pre-made tables after looking for them with wininfo_childeren()
     children = dome.frame_insert.up.winfo_children()
