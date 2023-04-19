@@ -14,6 +14,7 @@ port_id = config.get('postgresql','port')
 pwd = config.get('postgresql','password')
 conn = None
 cur = None
+
 def connect():
     conn = psycopg2.connect(
         host=hostname,
@@ -23,8 +24,14 @@ def connect():
         port=port_id)
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    print("connection successful")
     return cur,conn
+
+def check_cursor(cur):
+    """
+    Check if a cursor is closed, and if it is, rollback the connection to restore it.
+    """
+    if cur.closed:
+        cur.connection.rollback()
 
 def disconnect():
     if conn:
@@ -33,13 +40,24 @@ def disconnect():
         print("successfully disconnected")
 
 
+def ensure_connection(cur, conn):
+    if conn is None or conn.closed:
+        conn = psycopg2.connect(
+            host=hostname,
+            database=database,
+            user=uname,
+            password=pwd
+        )
+    if cur is None or cur.closed:
+        cur = conn.cursor()
+    return cur, conn
+
 def bp():
     print("button pressed")
 
 cur, conn = connect()
 
 def update_acc_analysis(radio,sql_exp,sql_inc,line_canvas_exp,line_ax_exp,line_canvas_inc,line_ax_inc,date_button_start,date_button_end,uid,text1,text2,total_expense_savings,total_income_savings,total_expense_cash,total_income_cash,total_expense_card,total_income_card):
-    check_cursor(cur)
     selection = radio.get()
     end_date = datetime.today()
     if selection == 0:
@@ -138,12 +156,11 @@ def update_values_analysis(start_date, end_date, uid,total_expense_savings,total
 
     return total_expense_savings, total_income_savings, total_expense_cash, total_income_cash, total_expense_card, total_income_card
 
-def check_cursor(cur):
-    """
-    Check if a cursor is closed, and if it is, rollback the connection to restore it.
-    """
-    if cur.closed:
-        cur.connection.rollback()
+def check_connection(cur, conn):
+    if conn.closed:
+        cur, conn = connect()
+    return cur, conn
+
 def line_graph(sql,uid,start_date,end_date,canvas,ax,text):
 
     ax.clear() # clear previous chart
