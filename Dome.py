@@ -24,7 +24,6 @@ def on_closing():
 def logout(name):
     # Logout function for logout_button
     print("button pressed")
-    custom_functions.disconnect()
     if len(name) > 0:
         dome.destroy()
         log = Login_screen.AuthenticationGUI()
@@ -450,7 +449,8 @@ def dome_main_app(uid,name):
     dome.title("Dome")
     dome.geometry("1280x800")
     dome.state("zoomed")
-    cur, conn = custom_functions.connect()
+    cur, conn = None, None  # Setting these variables to None initially
+    cur, conn = custom_functions.ensure_connection(cur, conn)
 #===============setting up default date values===================================
     global total_expense
     global total_income
@@ -679,8 +679,13 @@ def dome_main_app(uid,name):
     dome.frame_delete.up.grid(row=0,column=0,padx=20,pady=20,sticky="nswe")
     dome.frame_delete.down.grid(row=1,column=0,padx=20,pady=20,sticky="nswe")
 
+    dome.frame_settings.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
+    dome.frame_settings.rowconfigure(0, weight=1)
+    dome.frame_settings.columnconfigure(0, weight=1)
+    dome.frame_settings.grid_propagate(True)
+
     # Set up resizing for all frames
-    for frame in (dome.frame_delete, dome.frame_insert, dome.frame_settings, dome.frame_Expenses, dome.frame_Income,
+    for frame in (dome.frame_delete, dome.frame_insert, dome.frame_Expenses, dome.frame_Income,
                   dome.frame_acc_analysis):
         frame.grid(row=0, column=1, sticky="nswe", padx=20, pady=20)
         frame.rowconfigure(0, weight=1)
@@ -1145,15 +1150,15 @@ def dome_main_app(uid,name):
 #===========================settings frame======================
 
     fourth_label = customtkinter.CTkLabel(dome.frame_settings, text="Theme")
-    fourth_label.grid(row=1,column=1)
+    fourth_label.grid(row=1,column=1,sticky="nsew")
 
     combobox_apperance = customtkinter.CTkComboBox(master=dome.frame_settings,
                                                 values=["Dark","Light"])
 
-    combobox_apperance.grid(row=2, column=1, pady=10, padx=20, sticky="w")
+    combobox_apperance.grid(row=2, column=1, pady=10, padx=20, sticky="nsew")
 
     confirm_button = customtkinter.CTkButton(master=dome.frame_settings,text="Apply Changes",command=make_changes)
-    confirm_button.grid(row=2, column=2, pady=10, padx=20, sticky="w")
+    confirm_button.grid(row=2, column=2, pady=10, padx=20, sticky="nsew")
 
 #===========================Default Values======================
 
